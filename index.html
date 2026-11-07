@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#0b0f16">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>三角洲行动 · 跨设备手感对齐（手机 ↔ 平板）</title>
+<style>
+:root{--bg:#0b0f16;--card:#151c28;--card2:#1b2431;--line:#26303f;--text:#e6edf7;--muted:#8b98ab;--accent:#2dd4bf;--accent2:#38bdf8;--warn:#f59e0b;--bad:#ef4444;--ok:#22c55e}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0}
+body{background:radial-gradient(1200px 600px at 50% -10%,#16233a 0%,var(--bg) 55%);color:var(--text);font:14px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",Roboto,sans-serif;padding-bottom:40px}
+.wrap{max-width:1080px;margin:0 auto;padding:18px 14px 0}
+header h1{font-size:20px;margin:0 0 4px;letter-spacing:.5px}
+header h1 b{color:var(--accent)}
+header p{margin:0;color:var(--muted);font-size:12px}
+.tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:16px 0}
+.tabs button{padding:9px 4px;border:1px solid var(--line);background:var(--card);color:var(--muted);border-radius:10px;font-size:12.5px;cursor:pointer;transition:.15s}
+.tabs button.on{background:linear-gradient(180deg,#123f3a,#0f2f2c);color:var(--accent);border-color:#1f6f65;font-weight:600}
+section{display:none}
+section.on{display:block;animation:fi .18s ease}
+@keyframes fi{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:760px){.grid2{grid-template-columns:1fr}.tabs{grid-template-columns:repeat(2,1fr)}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
+.card h2{font-size:13px;margin:0 0 10px;color:var(--accent);font-weight:600;display:flex;align-items:center;gap:6px}
+.card h2 .tag{font-size:10px;padding:1px 6px;border-radius:99px;background:#0f2f2c;color:var(--accent);font-weight:500}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+@media(max-width:520px){.grid3,.grid4{grid-template-columns:1fr 1fr}}
+label{display:block;font-size:11.5px;color:var(--muted);margin-bottom:4px}
+input,select{width:100%;background:#0d131d;border:1px solid var(--line);border-radius:9px;padding:8px 9px;color:var(--text);font-size:14px;outline:none;font-family:inherit}
+input:focus,select:focus{border-color:var(--accent)}
+input[type=range]{padding:0;height:26px;accent-color:var(--accent);background:transparent;border:none}
+.row{display:flex;align-items:center;gap:8px}
+.row .grow{flex:1}
+.btn{border:1px solid var(--accent);color:var(--accent);background:transparent;border-radius:9px;padding:8px 12px;font-size:13px;cursor:pointer;font-family:inherit}
+.btn.solid{background:linear-gradient(180deg,#2dd4bf,#14b8a6);color:#052e2a;font-weight:700;border-color:transparent}
+.btn.ghost{border-color:var(--line);color:var(--muted)}
+.btn:active{transform:scale(.98)}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.chip{background:#0d131d;border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:12px;color:var(--muted)}
+.chip b{display:block;color:var(--text);font-size:16px;font-weight:600;margin-top:2px}
+.chip.hl b{color:var(--accent)}
+.chip.warn b{color:var(--warn)}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th{font-weight:500;color:var(--muted);text-align:left;padding:6px 4px;border-bottom:1px solid var(--line)}
+td{padding:7px 4px;border-bottom:1px solid #1c2432}
+td.num{text-align:right;font-variant-numeric:tabular-nums}
+tr:last-child td{border-bottom:none}
+.simwrap{position:relative}
+.simcv{display:block;width:100%;height:200px;border-radius:10px;background:#05080d;border:1px solid var(--line);touch-action:none;cursor:crosshair}
+.simlabel{position:absolute;top:8px;left:10px;font-size:11px;color:var(--muted);pointer-events:none}
+.hint{font-size:11.5px;color:var(--muted);margin:8px 0 0}
+.note{font-size:12px;color:var(--warn);background:#2a1f08;border:1px solid #4a3a12;border-radius:10px;padding:9px 10px;margin-top:10px;line-height:1.55}
+.ok{color:var(--ok)}.bad{color:var(--bad)}.muted{color:var(--muted)}
+.mono{font-variant-numeric:tabular-nums}
+.toast{position:fixed;left:50%;bottom:34px;transform:translateX(-50%) translateY(20px);background:#0f2f2c;border:1px solid #1f6f65;color:var(--accent);padding:9px 16px;border-radius:99px;font-size:12.5px;opacity:0;transition:.25s;pointer-events:none;z-index:99;max-width:86vw;text-align:center}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+.foot{color:var(--muted);font-size:11px;text-align:center;padding:18px 10px 0;line-height:1.7}
+.foot a{color:var(--accent2);text-decoration:none}
+code{background:#0d131d;border:1px solid var(--line);border-radius:5px;padding:1px 5px;font-size:11.5px;color:#9fe7dd}
+.swap{position:relative}
+.step{display:flex;gap:10px;align-items:flex-start;font-size:12.5px;color:var(--muted);padding:7px 0;border-bottom:1px dashed #1e2837}
+.step:last-child{border-bottom:none}
+.step i{flex:0 0 20px;height:20px;border-radius:50%;background:#0f2f2c;color:var(--accent);font-style:normal;font-size:11px;display:flex;align-items:center;justify-content:center;margin-top:1px}
+.bar{height:8px;border-radius:99px;background:#0d131d;overflow:hidden;margin-top:4px}
+.bar>i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#2dd4bf,#38bdf8)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>三角洲行动 · <b>跨设备手感对齐</b></h1>
+  <p>荣耀 200 Pro ↔ 拯救者 Y700 2025 · 全局 / 倍镜 / 陀螺仪 / FOV / 触控 全链路 · 单文件可部署</p>
+</header>
+
+<div class="tabs" id="tabs">
+  <button data-tab="setup" class="on">① 设备与参数</button>
+  <button data-tab="calc">② 灵敏度换算</button>
+  <button data-tab="sim">③ 手感模拟</button>
+  <button data-tab="deploy">④ 保存 / 部署</button>
+</div>
+
+<!-- ========== ① 设备与参数 ========== -->
+<section id="tab-setup" class="on">
+  <div class="grid2">
+    <div class="card">
+      <h2>设备 A · 手机（基准）<span class="tag">你的手感来源</span></h2>
+      <label>预设机型</label>
+      <select id="aPreset">
+        <option value="honor200">荣耀 200 Pro（6.78" 2700×1224 120Hz）</option>
+        <option value="custom">自定义</option>
+      </select>
+      <div class="grid3" style="margin-top:8px">
+        <div><label>对角线（英寸）</label><input id="aInch" type="number" step="0.01" value="6.78"></div>
+        <div><label>分辨率 宽</label><input id="aW" type="number" step="1" value="2700"></div>
+        <div><label>分辨率 高</label><input id="aH" type="number" step="1" value="1224"></div>
+      </div>
+      <div class="grid2" style="margin-top:8px">
+        <div><label>刷新率 Hz</label><input id="aHz" type="number" step="1" value="120"></div>
+        <div><label>触控采样率 Hz（参考）</label><input id="aTouch" type="number" step="10" value="300"></div>
+      </div>
+      <div class="chips">
+        <div class="chip">PPI<b id="rPpiA">-</b></div>
+        <div class="chip">可视宽 cm<b id="rWidthA">-</b></div>
+        <div class="chip">垂直 FOV<b id="rVfovA">-</b></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>设备 B · 平板（目标）<span class="tag">需要换算到的手感</span></h2>
+      <label>预设机型</label>
+      <select id="bPreset">
+        <option value="y700">联想拯救者 Y700 2025 / 三代（8.8" 2560×1600 165Hz）</option>
+        <option value="custom">自定义</option>
+      </select>
+      <div class="grid3" style="margin-top:8px">
+        <div><label>对角线（英寸）</label><input id="bInch" type="number" step="0.01" value="8.8"></div>
+        <div><label>分辨率 宽</label><input id="bW" type="number" step="1" value="2560"></div>
+        <div><label>分辨率 高</label><input id="bH" type="number" step="1" value="1600"></div>
+      </div>
+      <div class="grid2" style="margin-top:8px">
+        <div><label>刷新率 Hz</label><input id="bHz" type="number" step="1" value="165"></div>
+        <div><label>触控采样率 Hz（参考）</label><input id="bTouch" type="number" step="10" value="480"></div>
+      </div>
+      <div class="chips">
+        <div class="chip">PPI<b id="rPpiB">-</b></div>
+        <div class="chip">可视宽 cm<b id="rWidthB">-</b></div>
+        <div class="chip">垂直 FOV<b id="rVfovB">-</b></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>游戏参数 · 三角洲行动手游<span class="tag">社区攻略口径</span></h2>
+    <div class="grid3">
+      <div>
+        <label>对齐模式</label>
+        <select id="mode">
+          <option value="mdv" selected>显示器距离 MDV（开镜/倍镜逐镜补偿）</option>
+          <option value="360">统一角度速度（360°/cm 恒定，不补 FOV）</option>
+        </select>
+      </div>
+      <div>
+        <label>MDV 显示器距离系数 <span id="mdvTxt" class="muted">1.33</span></label>
+        <input id="mdv" type="range" min="0" max="1.78" step="0.01" value="1.33">
+      </div>
+      <div>
+        <label>基准 cm/360（在 A 上实测）</label>
+        <input id="cm360" type="number" step="0.1" value="8.0">
+      </div>
+    </div>
+    <div class="grid2" style="margin-top:8px">
+      <div><label>A 水平 FOV（手游推荐 105–110）</label><input id="hFovA" type="number" step="1" value="105"></div>
+      <div><label>B 水平 FOV</label><input id="hFovB" type="number" step="1" value="105"></div>
+    </div>
+    <p class="hint">MDV 系数 0=准星处匹配，1.33=4:3 屏幕边缘（16:9 的 75% 宽），1.78=16:9 左右边缘；三角洲行动社区通用起点为 1.33。系数只影响开镜/倍镜，不影响腰射。</p>
+  </div>
+
+  <div class="card">
+    <h2>基准灵敏度（设备 A 游戏内）</h2>
+    <div class="grid4">
+      <div><label>总滑屏灵敏度</label><input id="hipH" type="number" step="1" value="125"></div>
+      <div><label>垂直灵敏度</label><input id="hipV" type="number" step="1" value="125"></div>
+      <div><label>陀螺仪水平</label><input id="gH" type="number" step="1" value="125"></div>
+      <div><label>陀螺仪垂直</label><input id="gV" type="number" step="1" value="65"></div>
+    </div>
+    <p class="hint">数值取自社区通用推荐（125/125/125/65），请按你游戏内实际值修改；陀螺仪灵敏度是角速度乘数，与 PPI 无关，只随 FOV 变化。</p>
+  </div>
+
+  <div class="card">
+    <h2>校准（可选）</h2>
+    <p class="hint" style="margin:0 0 8px">在 A 设备靶场里：手指滑动 <code>X cm</code>，视角刚好转 360°。把 X 填进上面的「基准 cm/360」，本工具即可给出 B 上预测的 cm/360 与每 cm 转角。</p>
+    <div class="note">当前为纯前端估算：三角洲行动未公开灵敏度→角度的官方常数，本工具用「同一游戏内、同一灵敏度值在两台设备上产生相同角度/像素比」的相对模型换算；绝对值（cm/360）需你用一次实测校准。</div>
+  </div>
+</section>
+
+<!-- ========== ② 灵敏度换算 ========== -->
+<section id="tab-calc">
+  <div class="card">
+    <h2>核心结论</h2>
+    <div class="chips">
+      <div class="chip">A 的 cm/360<b id="rCm360A">-</b></div>
+      <div class="chip">B 原始 cm/360<b id="rCmBraw">-</b></div>
+      <div class="chip hl">B 对齐后 cm/360<b id="rCmB">-</b></div>
+      <div class="chip">腰射换算系数<b id="rHipFactor">-</b></div>
+      <div class="chip">FOV 补偿系数<b id="rFovFactor">-</b></div>
+    </div>
+    <p class="hint" id="verdict"></p>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <h2>全局 / 陀螺仪</h2>
+      <table>
+        <thead><tr><th>项目</th><th class="num">A 原始</th><th class="num">B 换算</th></tr></thead>
+        <tbody>
+          <tr><td>总滑屏灵敏度（腰射）</td><td class="num" id="rAHip">-</td><td class="num" id="rBHip">-</td></tr>
+          <tr><td>垂直灵敏度</td><td class="num" id="rAHipV">-</td><td class="num" id="rBHipV">-</td></tr>
+          <tr><td>陀螺仪水平</td><td class="num" id="rAGH">-</td><td class="num" id="rBGH">-</td></tr>
+          <tr><td>陀螺仪垂直</td><td class="num" id="rAGV">-</td><td class="num" id="rBGV">-</td></tr>
+        </tbody>
+      </table>
+      <p class="hint">腰射按 360° 等距换算：系数 = PPI_A / PPI_B。陀螺仪不乘 PPI，只乘 FOV 正切比：系数 = tan(FOV_B/2) / tan(FOV_A/2)。</p>
+    </div>
+
+    <div class="card">
+      <h2>界面 / 屏幕尺度</h2>
+      <table>
+        <thead><tr><th>项目</th><th class="num">A</th><th class="num">B</th></tr></thead>
+        <tbody>
+          <tr><td>水平 FOV</td><td class="num" id="rHA">-</td><td class="num" id="rHB">-</td></tr>
+          <tr><td>垂直 FOV</td><td class="num" id="rVA">-</td><td class="num" id="rVB">-</td></tr>
+          <tr><td>可视宽度 cm</td><td class="num" id="rWA">-</td><td class="num" id="rWB">-</td></tr>
+          <tr><td>每 cm 转角</td><td class="num" id="rDegA">-</td><td class="num" id="rDegB">-</td></tr>
+        </tbody>
+      </table>
+      <p class="hint">同等物理滑动下，B 屏幕上的画面位移比例 = tan(θ_B)/tan(FOV_B/2)。FOV 补偿系数 = tan(FOV_A/2)/tan(FOV_B/2)（A 与 B 的 FOV 差越大，越需要开镜 MDV 系数吸收）。</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>镜头 / 倍镜灵敏度（逐镜换算）</h2>
+    <table>
+      <thead><tr><th>倍镜</th><th class="num">缩放</th><th class="num">A 值</th><th class="num">换算系数</th><th class="num">B 值</th></tr></thead>
+      <tbody id="scopeBody"></tbody>
+    </table>
+    <p class="hint">同一倍镜在两台设备缩放相同，因此镜内 FOV 正切比会抵消一部分差异；360° 模式下所有倍镜系数相同，MDV 模式下逐镜系数不同——这正是「cm/360 对齐后开镜仍别扭」的来源。</p>
+  </div>
+</section>
+
+<!-- ========== ③ 手感模拟 ========== -->
+<section id="tab-sim">
+  <div class="card">
+    <h2>同一物理滑动 · 双屏对照<span class="tag">拖动或滑动条</span></h2>
+    <div class="grid2">
+      <div class="simwrap">
+        <div class="simlabel">A · 手机（基准）</div>
+        <canvas id="cvA" class="simcv"></canvas>
+      </div>
+      <div class="simwrap">
+        <div class="simlabel">B · 平板 <span id="simBMode" class="muted">（原始值）</span></div>
+        <canvas id="cvB" class="simcv"></canvas>
+      </div>
+    </div>
+    <div style="margin-top:10px">
+      <label>模拟手指滑动：<b id="cmTxt" class="mono">3.00</b> cm（可拖动画布，按 96dpi 估算行程）</label>
+      <input id="cmRange" type="range" min="0" max="4" step="0.02" value="0.8">
+    </div>
+    <div class="row" style="margin-top:8px">
+      <div class="grow">
+        <label class="row" style="gap:6px;margin:0"><input type="checkbox" id="bAligned" style="width:auto;accent-color:var(--accent)"> B 使用对齐后的灵敏度</label>
+      </div>
+      <button class="btn" id="resetSim">归零</button>
+    </div>
+    <p class="hint" id="simHint"></p>
+  </div>
+
+  <div class="card">
+    <h2>触控 / 帧率延迟参考</h2>
+    <div class="chips">
+      <div class="chip">A 采样间隔<b id="rTouchA">-</b></div>
+      <div class="chip">B 采样间隔<b id="rTouchB">-</b></div>
+      <div class="chip">A 平均延迟<b id="rLatA">-</b></div>
+      <div class="chip hl">B 平均延迟<b id="rLatB">-</b></div>
+    </div>
+    <p class="hint">平均输入延迟 ≈ 0.5×采样间隔 + 0.5×帧间隔（不含系统/网络/游戏逻辑）。触控采样与刷新率只影响延迟与跟手，不改变 cm/360；浏览器无法读取真实采样率，请按机型实测或社区数据填写。</p>
+    <div style="margin-top:10px">
+      <label>A 延迟构成</label><div class="bar"><i id="barA" style="width:0%"></i></div>
+      <label style="margin-top:8px">B 延迟构成</label><div class="bar"><i id="barB" style="width:0%"></i></div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== ④ 保存 / 部署 ========== -->
+<section id="tab-deploy">
+  <div class="card">
+    <h2>配置</h2>
+    <div class="row">
+      <div class="grow"><input id="cfgName" placeholder="配置名，例：三角洲 手搓基准 v3"></div>
+      <button class="btn solid" id="saveBtn">保存</button>
+    </div>
+    <div class="row" style="margin-top:8px;flex-wrap:wrap">
+      <button class="btn" id="shareBtn">生成分享链接</button>
+      <button class="btn" id="exportBtn">导出 JSON</button>
+      <button class="btn" id="importBtn">导入 JSON</button>
+      <button class="btn ghost" id="listBtn">查看配置</button>
+      <button class="btn ghost" id="clearBtn">清空本地配置</button>
+    </div>
+    <div id="cfgList" class="hint" style="margin-top:10px"></div>
+  </div>
+
+  <div class="card">
+    <h2>部署成网址（三种方式，均无需后端）</h2>
+    <div class="step"><i>1</i><div><b>最省事：拖到静态托管</b><br>把本文件改名 <code>index.html</code>，拖进 Netlify Drop / Cloudflare Pages / Vercel，几秒后得到一个 https 链接，手机直接打开。文件是纯前端、无 CDN 依赖，断网也能用。</div></div>
+    <div class="step"><i>2</i><div><b>有 GitHub：GitHub Pages</b><br>新建仓库 → 上传 <code>index.html</code> → Settings → Pages → Deploy from branch (main / root) → 得到 <code>https://&lt;用户名&gt;.github.io/&lt;仓库名&gt;/</code>。</div></div>
+    <div class="step"><i>3</i><div><b>只想局域网给手机用</b><br>电脑与本机同一 Wi-Fi，在文件目录执行 <code>python -m http.server 8000</code>，手机访问 <code>http://电脑局域网IP:8000</code>。注意 Windows 防火墙放行。</div></div>
+    <div class="note">微信/QQ 内置浏览器可能限制本地文件与部分 API；正式使用请用系统浏览器（Safari / Chrome / Edge），并「添加到主屏幕」。本工具不含任何后端与账号，配置只存本机 localStorage 与分享链接的 hash 中。</div>
+  </div>
+
+  <div class="card">
+    <h2>算法与口径</h2>
+    <p class="hint" style="margin:0">
+      腰射：<code>S_B = S_A × PPI_A / PPI_B</code>（360° 等距）。<br>
+      开镜：<code>S_B(镜) = S_A(镜) × PPI_A/PPI_B × θ(c, FOV_B镜)/θ(c, FOV_A镜)</code>，<code>θ(c,f) = arctan(c·tan(f/2))</code>，<code>c</code> 为 MDV 系数。<br>
+      陀螺仪：<code>G_B = G_A × tan(FOV_B/2)/tan(FOV_A/2)</code>（无 PPI）。<br>
+      镜内 FOV：<code>FOV镜 = 2·arctan(tan(FOV_base/2)/zoom)</code>。<br>
+      数据口径：荣耀 200 Pro 437PPI/120Hz；Y700 2025 343PPI/165Hz；灵敏度推荐值 125/125/125/65 与 MDV 1.33 来自社区攻略，非官方。<br>
+      本工具是估算器，最终以靶场实测微调 0.1 为准。
+    </p>
+  </div>
+</section>
+
+<div class="foot">
+  三角洲行动 · 跨设备对齐 v3 · 单文件离线可用<br>
+  仅供手感对齐参考，非官方工具，不提供任何外挂或自动瞄准
+</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+'use strict';
+var $ = function(id){ return document.getElementById(id); };
+var DEG = Math.PI/180;
+
+var SCOPES = [
+  {id:'iron',  name:'机瞄',        zoom:1.0, def:65},
+  {id:'red',   name:'红点 / 全息', zoom:1.0, def:65},
+  {id:'x2',    name:'2 倍',        zoom:2.0, def:65},
+  {id:'x3',    name:'3 倍',        zoom:3.0, def:55},
+  {id:'x4',    name:'4 倍',        zoom:4.0, def:45},
+  {id:'x5',    name:'5 倍',        zoom:5.0, def:35},
+  {id:'x6',    name:'6 倍及以上',  zoom:6.0, def:25}
+];
+
+var PRESETS = {
+  honor200: {inch:6.78, w:2700, h:1224, hz:120, touch:300},
+  y700:     {inch:8.8,  w:2560, h:1600, hz:165, touch:480}
+};
+
+function fv(id, d){ var v = parseFloat($(id).value); return isFinite(v) ? v : d; }
+function clamp(v, lo, hi){ return Math.min(hi, Math.max(lo, v)); }
+function fx(v, n){ if(!isFinite(v)) return '-'; return (Math.round(v*Math.pow(10,n))/Math.pow(10,n)).toFixed(n); }
+function wrap180(a){ a = ((a + 180) % 360 + 360) % 360 - 180; return a; }
+function h2v(hFovDeg, aspect){ return 2*Math.atan(Math.tan(hFovDeg*DEG/2)/aspect)/DEG; }
+function v2h(vFovDeg, aspect){ return 2*Math.atan(Math.tan(vFovDeg*DEG/2)*aspect)/DEG; }
+function scopeVfov(baseVfovDeg, zoom){ return 2*Math.atan(Math.tan(baseVfovDeg*DEG/2)/zoom)/DEG; }
+function theta(c, vfovDeg){ var t = Math.tan(vfovDeg*DEG/2); return c <= 1e-6 ? c*t : Math.atan(c*t); }
+
+var toastTimer = null;
+function toast(msg){
+  var el = $('toast'); el.textContent = msg; el.classList.add('on');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function(){ el.classList.remove('on'); }, 2200);
+}
+
+/* ---------- 设备联动 ---------- */
+function applyPreset(which){
+  var key = $(which==='a' ? 'aPreset' : 'bPreset').value;
+  if(key === 'custom' || !PRESETS[key]) return;
+  var p = PRESETS[key];
+  $(which+'Inch').value = p.inch;
+  $(which+'W').value = p.w;
+  $(which+'H').value = p.h;
+  $(which+'Hz').value = p.hz;
+  $(which+'Touch').value = p.touch;
+  recalc();
+}
+$('aPreset').addEventListener('change', function(){ applyPreset('a'); });
+$('bPreset').addEventListener('change', function(){ applyPreset('b'); });
+
+/* ---------- 计算 ---------- */
+function compute(){
+  var A = {inch:fv('aInch',6.78), w:fv('aW',2700), h:fv('aH',1224), hz:fv('aHz',120), touch:fv('aTouch',300)};
+  var B = {inch:fv('bInch',8.8), w:fv('bW',2560), h:fv('bH',1600), hz:fv('bHz',165), touch:fv('bTouch',480)};
+  var ppiA = Math.sqrt(A.w*A.w + A.h*A.h) / Math.max(0.5, A.inch);
+  var ppiB = Math.sqrt(B.w*B.w + B.h*B.h) / Math.max(0.5, B.inch);
+  var ppiRatio = ppiA / ppiB;
+  var aspectA = A.w / A.h, aspectB = B.w / B.h;
+  var hA = clamp(fv('hFovA',105), 40, 140), hB = clamp(fv('hFovB',105), 40, 140);
+  var vA = h2v(hA, aspectA), vB = h2v(hB, aspectB);
+  var mode = $('mode').value;
+  var c = clamp(fv('mdv',1.33), 0, 1.78);
+  var cmA = Math.max(0.5, fv('cm360',8));
+  var hipH = fv('hipH',125), hipV = fv('hipV',125), gH = fv('gH',125), gV = fv('gV',65);
+
+  var scopes = SCOPES.map(function(s){
+    var fA = scopeVfov(vA, s.zoom), fB = scopeVfov(vB, s.zoom), f;
+    if(mode === '360') f = ppiRatio;
+    else if(c <= 1e-4) f = ppiRatio * Math.tan(fB*DEG/2) / Math.tan(fA*DEG/2);
+    else f = ppiRatio * theta(c, fB) / theta(c, fA);
+    return {id:s.id, name:s.name, zoom:s.zoom, A:fv('s_'+s.id, s.def), fA:fA, fB:fB, factor:f, B:fv('s_'+s.id, s.def)*f};
+  });
+
+  var gyroFH = Math.tan(hB*DEG/2) / Math.tan(hA*DEG/2);
+  var gyroFV = Math.tan(vB*DEG/2) / Math.tan(vA*DEG/2);
+
+  return {
+    A:A, B:B, ppiA:ppiA, ppiB:ppiB, ppiRatio:ppiRatio, hA:hA, hB:hB, vA:vA, vB:vB,
+    mode:mode, c:c, cmA:cmA, hipH:hipH, hipV:hipV, gH:gH, gV:gV, scopes:scopes,
+    gyroFH:gyroFH, gyroFV:gyroFV,
+    cmBraw:cmA * ppiRatio, hipFactor:ppiRatio,
+    fovFactor: Math.tan(hA*DEG/2) / Math.tan(hB*DEG/2),
+    widthA: A.w / ppiA * 2.54, widthB: B.w / ppiB * 2.54
+  };
+}
+
+/* ---------- 渲染 ---------- */
+function renderCalc(r){
+  $('rPpiA').textContent = fx(r.ppiA,1);
+  $('rPpiB').textContent = fx(r.ppiB,1);
+  $('rWidthA').textContent = fx(r.widthA,2);
+  $('rWidthB').textContent = fx(r.widthB,2);
+  $('rVfovA').textContent = fx(r.vA,1) + '°';
+  $('rVfovB').textContent = fx(r.vB,1) + '°';
+  $('rCm360A').textContent = fx(r.cmA,2) + ' cm';
+  $('rCmBraw').textContent = fx(r.cmBraw,2) + ' cm';
+  $('rCmB').textContent = fx(r.cmA,2) + ' cm';
+  $('rHipFactor').textContent = '×' + fx(r.hipFactor,4);
+  $('rFovFactor').textContent = '×' + fx(r.fovFactor,4);
+  $('rAHip').textContent = fx(r.hipH,1);
+  $('rBHip').textContent = fx(r.hipH*r.hipFactor,1);
+  $('rAHipV').textContent = fx(r.hipV,1);
+  $('rBHipV').textContent = fx(r.hipV*r.hipFactor,1);
+  $('rAGH').textContent = fx(r.gH,1);
+  $('rBGH').textContent = fx(r.gH*r.gyroFH,1);
+  $('rAGV').textContent = fx(r.gV,1);
+  $('rBGV').textContent = fx(r.gV*r.gyroFV,1);
+  $('rHA').textContent = fx(r.hA,1) + '°';
+  $('rHB').textContent = fx(r.hB,1) + '°';
+  $('rVA').textContent = fx(r.vA,1) + '°';
+  $('rVB').textContent = fx(r.vB,1) + '°';
+  $('rWA').textContent = fx(r.widthA,2);
+  $('rWB').textContent = fx(r.widthB,2);
+  $('rDegA').textContent = fx(360/r.cmA,1) + '°';
+  $('rDegB').textContent = fx(360/r.cmA,1) + '°';
+
+  var tb = $('scopeBody');
+  if(!tb.children.length) buildScopeTable();
+  r.scopes.forEach(function(s, i){
+    var tr = tb.children[i]; if(!tr) return;
+    var fc = tr.querySelector('[data-f]'), bc = tr.querySelector('[data-b]');
+    if(fc) fc.textContent = '×' + fx(s.factor,4);
+    if(bc) bc.textContent = fx(s.B,1);
+  });
+
+  var worse = r.ppiRatio > 1;
+  $('verdict').innerHTML = 'A 至 B 的腰射换算系数为 <b>×' + fx(r.hipFactor,4) + '</b>：同灵敏度值直接搬过去，B 会' +
+    (worse ? '<span class="bad">偏慢</span>' : '<span class="ok">偏快</span>') +
+    '（B 原始 cm/360 = ' + fx(r.cmBraw,2) + ' cm，对齐后 = ' + fx(r.cmA,2) + ' cm）。' +
+    '开镜/倍镜请再叠加 MDV 系数（当前 ' + (r.mode === 'mdv' ? fx(r.c,2) : '—') + '）与 FOV 比。';
+
+  $('rTouchA').textContent = fx(1000/Math.max(30, r.A.touch),2) + ' ms';
+  $('rTouchB').textContent = fx(1000/Math.max(30, r.B.touch),2) + ' ms';
+  var latA = 1000/Math.max(30, r.A.touch)/2 + 1000/Math.max(30, r.A.hz)/2;
+  var latB = 1000/Math.max(30, r.B.touch)/2 + 1000/Math.max(30, r.B.hz)/2;
+  $('rLatA').textContent = fx(latA,2) + ' ms';
+  $('rLatB').textContent = fx(latB,2) + ' ms';
+  $('barA').style.width = Math.min(100, latA/40*100) + '%';
+  $('barB').style.width = Math.min(100, latB/40*100) + '%';
+
+  $('rCm360A').textContent = fx(r.cmA,2) + ' cm';
+}
+
+function buildScopeTable(){
+  var tb = $('scopeBody');
+  tb.innerHTML = SCOPES.map(function(s){
+    return '<tr><td>' + s.name + '</td><td class="num">×' + fx(s.zoom,1) + '</td>' +
+      '<td class="num"><input id="s_' + s.id + '" type="number" step="1" value="' + s.def + '" style="width:74px;text-align:right;padding:5px 7px"></td>' +
+      '<td class="num" data-f>-</td><td class="num strong" data-b>-</td></tr>';
+  }).join('');
+  Array.prototype.forEach.call(tb.querySelectorAll('input'), function(inp){
+    inp.addEventListener('input', function(){ recalc(); });
+  });
+}
+
+/* ---------- 模拟画布 ---------- */
+var sim = {cm:0.8, aligned:false, dragging:false, lastX:0};
+
+function drawScene(cv, viewDeg, hFovDeg, vFovDeg, label, color, dim){
+  var dpr = Math.min(window.devicePixelRatio || 1, 2);
+  var cssW = cv.clientWidth || 300, cssH = cv.clientHeight || 200;
+  if(cv.width !== Math.round(cssW*dpr) || cv.height !== Math.round(cssH*dpr)){
+    cv.width = Math.round(cssW*dpr); cv.height = Math.round(cssH*dpr);
+  }
+  var g = cv.getContext('2d');
+  g.setTransform(dpr,0,0,dpr,0,0);
+  g.clearRect(0,0,cssW,cssH);
+
+  var back = g.createLinearGradient(0,0,0,cssH);
+  back.addColorStop(0,'#0a1220'); back.addColorStop(1,'#050a12');
+  g.fillStyle = back; g.fillRect(0,0,cssW,cssH);
+
+  // 地平线网格（随视角平移，模拟转向）
+  var cx = cssW/2, cy = cssH/2;
+  g.strokeStyle = 'rgba(56,189,248,0.12)'; g.lineWidth = 1;
+  for(var i=-4;i<=4;i++){
+    var gx = cx + i*(cssW/4) - (wrap180(-viewDeg)/ (hFovDeg/2)) * (cssW/2);
+    g.beginPath(); g.moveTo(gx,0); g.lineTo(gx,cssH); g.stroke();
+  }
+  g.beginPath(); g.moveTo(0,cy); g.lineTo(cssW,cy); g.stroke();
+
+  // 目标：世界角 0
+  var delta = wrap180(-viewDeg);
+  var halfTan = Math.tan(hFovDeg*DEG/2);
+  var visible = Math.abs(delta) < 84;
+  var frac = Math.tan(clamp(delta,-84,84)*DEG) / halfTan;
+  var tx = clamp(cx + frac*(cssW/2)*0.92, 12, cssW-12);
+  if(visible){
+    var rad = Math.max(10, Math.min(26, cssW*0.05)) * Math.max(0.55, 1 + delta/400);
+    g.beginPath(); g.arc(tx, cy, rad, 0, Math.PI*2);
+    g.strokeStyle = color; g.lineWidth = 2.2; g.stroke();
+    g.beginPath(); g.arc(tx, cy, rad*0.35, 0, Math.PI*2);
+    g.fillStyle = color; g.globalAlpha = 0.35; g.fill(); g.globalAlpha = 1;
+  } else {
+    var side = delta > 0 ? cssW - 14 : 14;
+    g.fillStyle = color; g.globalAlpha = .6;
+    g.beginPath(); g.moveTo(side, cy-8); g.lineTo(side + (delta>0?-12:12), cy); g.lineTo(side, cy+8); g.closePath(); g.fill();
+    g.globalAlpha = 1;
+  }
+
+  // 准星
+  g.strokeStyle = 'rgba(255,255,255,.9)'; g.lineWidth = 1.4;
+  g.beginPath(); g.moveTo(cx-9,cy); g.lineTo(cx+9,cy); g.moveTo(cx,cy-9); g.lineTo(cx,cy+9); g.stroke();
+
+  // HUD
+  g.fillStyle = 'rgba(230,237,247,.85)'; g.font = '11px ui-monospace,Consolas,monospace';
+  g.fillText(label, 10, 16);
+  g.fillStyle = 'rgba(139,152,171,.9)';
+  g.fillText('FOV ' + fx(hFovDeg,1) + '° · 视角 ' + fx(wrap180(viewDeg),1) + '°', 10, cssH - 10);
+}
+
+function renderSim(r){
+  var degA = 360 / r.cmA;                    // A 每 cm 转角
+  var cmB = sim.aligned ? r.cmA : r.cmBraw;  // B 的 cm/360
+  var degB = 360 / cmB;
+  var yawA = sim.cm * degA;
+  var yawB = sim.cm * degB;
+
+  drawScene($('cvA'), yawA, r.hA, r.vA, 'A 手机 · ' + fx(degA,1) + '°/cm', '#2dd4bf', false);
+  drawScene($('cvB'), yawB, r.hB, r.vB, (sim.aligned ? 'B 对齐 · ' : 'B 原始 · ') + fx(degB,1) + '°/cm', sim.aligned ? '#38bdf8' : '#f59e0b', !sim.aligned);
+
+  $('cmTxt').textContent = fx(sim.cm,2);
+  $('cmRange').value = sim.cm;
+  $('simBMode').textContent = sim.aligned ? '（已对齐）' : '（原始值）';
+  $('bAligned').checked = sim.aligned;
+
+  var offA = Math.tan(clamp(wrap180(-yawA),-84,84)*DEG) / Math.tan(r.hA*DEG/2);
+  var offB = Math.tan(clamp(wrap180(-yawB),-84,84)*DEG) / Math.tan(r.hB*DEG/2);
+  $('simHint').innerHTML = '同一滑动 ' + fx(sim.cm,2) + ' cm：A 转 <b>' + fx(yawA,1) + '°</b>，B 转 <b>' + fx(yawB,1) + '°</b>。' +
+    '屏幕上目标偏移比例 A=' + fx(offA*100,1) + '%、B=' + fx(offB*100,1) + '%。' +
+    (sim.aligned ? ' 已对齐：两者转角一致，剩余差异仅来自 FOV 不同（开镜时由 MDV 系数吸收）。' : ' 未对齐：B 的转速与 A 不一致，这是"割裂感"的主因。');
+}
+
+/* ---------- 主流程 ---------- */
+var lastR = null;
+function recalc(){
+  var r = compute();
+  lastR = r;
+  renderCalc(r);
+  renderSim(r);
+  $('mdvTxt').textContent = fx(r.c,2);
+}
+
+/* ---------- 事件 ---------- */
+['aInch','aW','aH','aHz','aTouch','bInch','bW','bH','bHz','bTouch','hFovA','hFovB','cm360','hipH','hipV','gH','gV','mdv']
+  .forEach(function(id){ $(id).addEventListener('input', function(){ recalc(); }); });
+$('mode').addEventListener('change', recalc);
+$('cmRange').addEventListener('input', function(){ sim.cm = fv('cmRange',3); renderSim(lastR); });
+
+$('resetSim').addEventListener('click', function(){ sim.cm = 0; renderSim(lastR); });
+$('bAligned').addEventListener('change', function(){ sim.aligned = $('bAligned').checked; renderSim(lastR); });
+
+/* 画布拖拽（96dpi 估算行程：1 css px = 0.02646 cm） */
+function bindDrag(cv){
+  cv.addEventListener('pointerdown', function(e){
+    if(e.button && e.button !== 0) return;
+    sim.dragging = true; sim.lastX = e.clientX;
+    if(cv.setPointerCapture) cv.setPointerCapture(e.pointerId);
+    e.preventDefault();
+  });
+  cv.addEventListener('pointermove', function(e){
+    if(!sim.dragging) return;
+    var dx = e.clientX - sim.lastX; sim.lastX = e.clientX;
+    sim.cm = clamp(sim.cm + dx * 0.026458, 0, 12);
+    renderSim(lastR);
+  });
+  ['pointerup','pointercancel','pointerleave'].forEach(function(ev){
+    cv.addEventListener(ev, function(){ sim.dragging = false; });
+  });
+  cv.addEventListener('contextmenu', function(e){ e.preventDefault(); });
+}
+bindDrag($('cvA'));
+bindDrag($('cvB'));
+
+/* ---------- 标签页 ---------- */
+Array.prototype.forEach.call(document.querySelectorAll('#tabs button'), function(b){
+  b.addEventListener('click', function(){
+    Array.prototype.forEach.call(document.querySelectorAll('#tabs button'), function(x){ x.classList.remove('on'); });
+    Array.prototype.forEach.call(document.querySelectorAll('section'), function(s){ s.classList.remove('on'); });
+    b.classList.add('on');
+    $( 'tab-' + b.getAttribute('data-tab') ).classList.add('on');
+    if(b.getAttribute('data-tab') === 'sim'){
+      requestAnimationFrame(function(){ renderSim(lastR); });
+    }
+  });
+});
+
+/* ---------- 配置 / 分享 ---------- */
+var LS_KEY = 'dfAlignV3';
+function getCfg(){
+  var cfg = {v:3, aPreset:$('aPreset').value, bPreset:$('bPreset').value,
+    a:{inch:fv('aInch',6.78), w:fv('aW',2700), h:fv('aH',1224), hz:fv('aHz',120), touch:fv('aTouch',300)},
+    b:{inch:fv('bInch',8.8), w:fv('bW',2560), h:fv('bH',1600), hz:fv('bHz',165), touch:fv('bTouch',480)},
+    mode:$('mode').value, mdv:fv('mdv',1.33), cm360:fv('cm360',8),
+    hFovA:fv('hFovA',105), hFovB:fv('hFovB',105),
+    hipH:fv('hipH',125), hipV:fv('hipV',125), gH:fv('gH',125), gV:fv('gV',65),
+    scopes:{}, aligned:sim.aligned};
+  SCOPES.forEach(function(s){ cfg.scopes[s.id] = fv('s_'+s.id, s.def); });
+  return cfg;
+}
+function setCfg(cfg){
+  if(!cfg) return;
+  $('aPreset').value = cfg.aPreset || 'custom';
+  $('bPreset').value = cfg.bPreset || 'custom';
+  ['a','b'].forEach(function(k){
+    var d = cfg[k] || {};
+    $(k+'Inch').value = d.inch; $(k+'W').value = d.w; $(k+'H').value = d.h;
+    $(k+'Hz').value = d.hz; $(k+'Touch').value = d.touch;
+  });
+  $('mode').value = cfg.mode || '360';
+  $('mdv').value = cfg.mdv != null ? cfg.mdv : 1.33;
+  $('cm360').value = cfg.cm360 != null ? cfg.cm360 : 8;
+  $('hFovA').value = cfg.hFovA != null ? cfg.hFovA : 105;
+  $('hFovB').value = cfg.hFovB != null ? cfg.hFovB : 105;
+  $('hipH').value = cfg.hipH != null ? cfg.hipH : 125;
+  $('hipV').value = cfg.hipV != null ? cfg.hipV : 125;
+  $('gH').value = cfg.gH != null ? cfg.gH : 125;
+  $('gV').value = cfg.gV != null ? cfg.gV : 65;
+  if(cfg.scopes){ SCOPES.forEach(function(s){ if(cfg.scopes[s.id] != null) $( 's_'+s.id ).value = cfg.scopes[s.id]; }); }
+  sim.aligned = !!cfg.aligned;
+  recalc();
+}
+function saveCfg(){
+  var name = ($('cfgName').value || '').trim();
+  if(!name){ toast('先填配置名'); return; }
+  var list = readList();
+  var i = list.findIndex(function(x){ return x.name === name; });
+  var item = {name:name, time:Date.now(), cfg:getCfg()};
+  if(i >= 0) list[i] = item; else list.push(item);
+  try { localStorage.setItem(LS_KEY, JSON.stringify(list)); toast('已保存：' + name); }
+  catch(e){ toast('保存失败：' + e.message); }
+}
+function readList(){
+  try { var raw = localStorage.getItem(LS_KEY); var v = raw ? JSON.parse(raw) : []; return Array.isArray(v) ? v : []; }
+  catch(e){ return []; }
+}
+function renderList(){
+  var list = readList();
+  var box = $('cfgList');
+  if(!list.length){ box.innerHTML = '暂无本地配置'; return; }
+  box.innerHTML = list.map(function(x, i){
+    return '<div class="row" style="justify-content:space-between;padding:6px 0;border-bottom:1px dashed #1e2837">' +
+      '<span>' + esc(x.name) + ' <span class="muted">' + new Date(x.time).toLocaleString() + '</span></span>' +
+      '<span class="row" style="gap:6px"><button class="btn ghost" data-load="' + i + '">载入</button>' +
+      '<button class="btn ghost" data-del="' + i + '">删除</button></span></div>';
+  }).join('');
+  Array.prototype.forEach.call(box.querySelectorAll('[data-load]'), function(b){
+    b.addEventListener('click', function(){ var l = readList(); var x = l[+b.getAttribute('data-load')]; if(x){ setCfg(x.cfg); toast('已载入：' + x.name); } });
+  });
+  Array.prototype.forEach.call(box.querySelectorAll('[data-del]'), function(b){
+    b.addEventListener('click', function(){
+      var l = readList(); l.splice(+b.getAttribute('data-del'), 1);
+      try { localStorage.setItem(LS_KEY, JSON.stringify(l)); } catch(e){}
+      renderList(); toast('已删除');
+    });
+  });
+}
+function esc(s){ return String(s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+
+function b64e(str){ return btoa(unescape(encodeURIComponent(str))); }
+function b64d(str){ return decodeURIComponent(escape(atob(str))); }
+
+function makeShare(){
+  var s = 's=' + b64e(JSON.stringify(getCfg()));
+  var url = location.origin + location.pathname + '#' + s;
+  location.hash = s;
+  var box = $('cfgList');
+  box.innerHTML = '<div class="row" style="flex-wrap:wrap;gap:8px"><input id="shareUrl" value="' + esc(url) + '" readonly style="flex:1;min-width:200px"><button class="btn solid" id="copyBtn">复制</button></div>';
+  $('copyBtn').addEventListener('click', function(){
+    var v = $('shareUrl').value;
+    if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(v).then(function(){ toast('链接已复制'); }, function(){ toast('复制失败，请长按选择'); }); }
+    else { $('shareUrl').select(); document.execCommand && document.execCommand('copy'); toast('已选中，手动复制'); }
+  });
+}
+function restoreHash(){
+  var h = location.hash.replace(/^#/, '');
+  if(!/^s=/.test(h)) return false;
+  try { var cfg = JSON.parse(b64d(h.slice(2))); setCfg(cfg); $('cfgName').value = '分享配置'; return true; }
+  catch(e){ return false; }
+}
+function exportJson(){
+  var blob = new Blob([JSON.stringify(getCfg(), null, 2)], {type:'application/json'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = 'delta-force-aligner-config.json';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function(){ URL.revokeObjectURL(a.href); }, 2000);
+  toast('已导出 JSON');
+}
+function importJson(){
+  var inp = document.createElement('input'); inp.type = 'file'; inp.accept = '.json,application/json';
+  inp.onchange = function(){
+    var f = inp.files && inp.files[0]; if(!f) return;
+    var fr = new FileReader();
+    fr.onload = function(){ try { setCfg(JSON.parse(fr.result)); toast('已导入'); } catch(e){ toast('JSON 解析失败'); } };
+    fr.readAsText(f);
+  };
+  inp.click();
+}
+
+$('saveBtn').addEventListener('click', saveCfg);
+$('shareBtn').addEventListener('click', makeShare);
+$('exportBtn').addEventListener('click', exportJson);
+$('importBtn').addEventListener('click', importJson);
+$('listBtn').addEventListener('click', renderList);
+$('clearBtn').addEventListener('click', function(){
+  try { localStorage.removeItem(LS_KEY); } catch(e){}
+  renderList(); toast('已清空');
+});
+
+/* ---------- 初始化 ---------- */
+window.addEventListener('resize', function(){ if(lastR) renderSim(lastR); });
+
+function init(){
+  buildScopeTable();
+  recalc();
+  if(!restoreHash()){
+    var list = readList();
+    if(list.length){ setCfg(list[list.length-1].cfg); }
+  }
+  renderList();
+  setTimeout(function(){ if(lastR) renderSim(lastR); }, 60);
+}
+init();
+})();
+</script>
+</body>
+</html>
